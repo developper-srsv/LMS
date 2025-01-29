@@ -86,63 +86,114 @@
 //   matcher: ["/admin/:path*", "/customer/:path*"], // Match /admin and /customer routes
 // };
 
+// import { NextRequest, NextResponse } from "next/server";
+// import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+
+// export async function middleware(req: NextRequest) {
+//   const res = NextResponse.next();
+
+//   // Initialize Supabase client
+//   const supabase = createMiddlewareClient({ req, res });
+
+//   // Get the user's session
+//   const {
+//     data: { session },
+//   } = await supabase.auth.getSession();
+
+//   // Redirect to login if session is not found
+//   if (!session) {
+//     console.log("No session found, redirecting to login.");
+//     return NextResponse.redirect(new URL("/auth/login", req.url));
+//   }
+
+//   // Fetch the user's role from the profiles table
+//   const { data: profile, error } = await supabase
+//     .from("profiles")
+//     .select("role")
+//     .eq("id", session.user.id)
+//     .single();
+
+//   if (error || !profile) {
+//     console.error("Error fetching user profile or role:", error);
+//     return NextResponse.redirect(new URL("/auth/login", req.url));
+//   }
+
+//   const userRole = profile.role; // e.g., 'admin', 'instructor', 'user'
+//   const pathname = req.nextUrl.pathname;
+
+//   // Define role-based access control
+//   const roleBasedPaths: Record<string, string[]> = {
+//     "/admin": ["admin"],
+//     "/instructor": ["instructor", "admin"],
+//     "/dashboard": ["user", "instructor", "admin"],
+//   };
+
+//   // Check if the user has access to the requested path
+//   for (const [path, roles] of Object.entries(roleBasedPaths)) {
+//     if (pathname.startsWith(path)) {
+//       if (!roles.includes(userRole)) {
+//         console.warn(
+//           `Unauthorized access to ${path} by user with role: ${userRole}`
+//         );
+//         return NextResponse.redirect(new URL("/403", req.url)); // Redirect unauthorized users to a 403 page
+//       }
+//     }
+//   }
+
+//   return res; // Allow access if all checks pass
+// }
+
+// export const config = {
+//   matcher: ["/admin/:path*", "/instructor/:path*", "/dashboard/:path*"], // Match these routes
+// };
+
 import { NextRequest, NextResponse } from "next/server";
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
-
-  // Initialize Supabase client
   const supabase = createMiddlewareClient({ req, res });
 
-  // Get the user's session
+  // Get user session
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Redirect to login if session is not found
   if (!session) {
-    console.log("No session found, redirecting to login.");
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
-  // Fetch the user's role from the profiles table
+  // Fetch user role
   const { data: profile, error } = await supabase
-    .from("profiles")
+    .from("users")
     .select("role")
     .eq("id", session.user.id)
     .single();
 
   if (error || !profile) {
-    console.error("Error fetching user profile or role:", error);
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
-  const userRole = profile.role; // e.g., 'admin', 'instructor', 'user'
+  const userRole = profile.role;
   const pathname = req.nextUrl.pathname;
 
-  // Define role-based access control
+  // Define access control rules
   const roleBasedPaths: Record<string, string[]> = {
-    "/admin": ["admin"],
-    "/instructor": ["instructor", "admin"],
-    "/dashboard": ["user", "instructor", "admin"],
+    "/admin": ["admin"], // Only admins
+    "/instructor": ["admin", "instructor"], // Admins & Instructors
+    "/dashboard": ["admin", "instructor", "user"], // Everyone
   };
 
-  // Check if the user has access to the requested path
+  // Restrict access
   for (const [path, roles] of Object.entries(roleBasedPaths)) {
-    if (pathname.startsWith(path)) {
-      if (!roles.includes(userRole)) {
-        console.warn(
-          `Unauthorized access to ${path} by user with role: ${userRole}`
-        );
-        return NextResponse.redirect(new URL("/403", req.url)); // Redirect unauthorized users to a 403 page
-      }
+    if (pathname.startsWith(path) && !roles.includes(userRole)) {
+      return NextResponse.redirect(new URL("/403", req.url));
     }
   }
 
-  return res; // Allow access if all checks pass
+  return res;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/instructor/:path*", "/dashboard/:path*"], // Match these routes
+  matcher: ["/admin/:path*", "/instructor/:path*", "/dashboard/:path*"],
 };

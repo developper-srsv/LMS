@@ -148,18 +148,153 @@
 //   );
 // }
 
-"use client";
+// "use client";
+
+// import { useState, useEffect } from "react";
+// import { supabase } from "../src/lib/supabase";
+// import { useRouter } from "next/navigation";
+
+// export default function HomePage() {
+//   const [courses, setCourses] = useState<any[]>([]); // Store courses
+//   const [filteredCourses, setFilteredCourses] = useState<any[]>([]); // For applying filters
+//   const [searchQuery, setSearchQuery] = useState(""); // Search input
+//   const [category, setCategory] = useState(""); // Selected category
+//   const [priceRange, setPriceRange] = useState(""); // Selected price range
+//   const router = useRouter();
+
+//   useEffect(() => {
+//     const fetchCourses = async () => {
+//       const { data, error } = await supabase.from("courses").select("*");
+//       if (error) {
+//         console.error("Error fetching courses:", error);
+//       } else {
+//         setCourses(data || []);
+//         setFilteredCourses(data || []); // Initialize filtered courses
+//       }
+//     };
+
+//     fetchCourses();
+//   }, []);
+
+//   // Handle filtering logic
+//   const applyFilters = () => {
+//     let filtered = courses;
+
+//     // Filter by search query
+//     if (searchQuery) {
+//       filtered = filtered.filter((course) =>
+//         course.title.toLowerCase().includes(searchQuery.toLowerCase())
+//       );
+//     }
+
+//     // Filter by category
+//     if (category) {
+//       filtered = filtered.filter((course) => course.category === category);
+//     }
+
+//     // Filter by price range
+//     if (priceRange) {
+//       filtered = filtered.filter((course) => {
+//         const price = parseFloat(course.price);
+//         if (priceRange === "free") return price === 0;
+//         if (priceRange === "under50") return price < 50;
+//         if (priceRange === "50to100") return price >= 50 && price <= 100;
+//         if (priceRange === "above100") return price > 100;
+//       });
+//     }
+
+//     setFilteredCourses(filtered);
+//   };
+
+//   useEffect(() => {
+//     applyFilters();
+//   }, [searchQuery, category, priceRange]);
+
+//   return (
+//     <div className="container mx-auto p-6 flex">
+//       {/* Sidebar */}
+//       <div className="w-1/4 p-4 bg-gray-100 rounded">
+//         <h2 className="text-xl font-bold mb-4">Filters</h2>
+
+//         {/* Search Bar */}
+//         <input
+//           type="text"
+//           placeholder="Search courses"
+//           className="w-full p-2 border rounded mb-4"
+//           value={searchQuery}
+//           onChange={(e) => setSearchQuery(e.target.value)}
+//         />
+
+//         {/* Category Filter */}
+//         <div className="mb-4">
+//           <h3 className="font-semibold mb-2">Category</h3>
+//           <select
+//             className="w-full p-2 border rounded"
+//             value={category}
+//             onChange={(e) => setCategory(e.target.value)}
+//           >
+//             <option value="">All Categories</option>
+//             <option value="programming">Programming</option>
+//             <option value="design">Design</option>
+//             <option value="marketing">Marketing</option>
+//           </select>
+//         </div>
+
+//         {/* Price Filter */}
+//         <div>
+//           <h3 className="font-semibold mb-2">Price</h3>
+//           <select
+//             className="w-full p-2 border rounded"
+//             value={priceRange}
+//             onChange={(e) => setPriceRange(e.target.value)}
+//           >
+//             <option value="">All Prices</option>
+//             <option value="free">Free</option>
+//             <option value="under50">Under $50</option>
+//             <option value="50to100">$50 - $100</option>
+//             <option value="above100">Above $100</option>
+//           </select>
+//         </div>
+//       </div>
+
+//       {/* Main Content */}
+//       <div className="w-3/4 p-6">
+//         <h1 className="text-3xl font-bold mb-6">Featured Courses</h1>
+//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+//           {filteredCourses.map((course) => (
+//             <div
+//               key={course.id}
+//               className="p-4 bg-white rounded shadow cursor-pointer"
+//               onClick={() => router.push(`/instructor/courses/${course.id}`)}
+//             >
+//               <img
+//                 src={course.thumbnail_url}
+//                 alt={course.title}
+//                 className="w-full h-40 object-cover rounded mb-4"
+//               />
+//               <h2 className="text-xl font-semibold">{course.title}</h2>
+//               <p className="text-gray-500 text-sm">{course.instructor}</p>
+//               <p className="text-blue-600 font-bold">${course.price}</p>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+'use client';
 
 import { useState, useEffect } from "react";
 import { supabase } from "../src/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function HomePage() {
-  const [courses, setCourses] = useState<any[]>([]); // Store courses
-  const [filteredCourses, setFilteredCourses] = useState<any[]>([]); // For applying filters
-  const [searchQuery, setSearchQuery] = useState(""); // Search input
-  const [category, setCategory] = useState(""); // Selected category
-  const [priceRange, setPriceRange] = useState(""); // Selected price range
+  const [courses, setCourses] = useState<any[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [category, setCategory] = useState("");
+  const [priceRange, setPriceRange] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -168,33 +303,37 @@ export default function HomePage() {
       if (error) {
         console.error("Error fetching courses:", error);
       } else {
-        setCourses(data || []);
-        setFilteredCourses(data || []); // Initialize filtered courses
+        // Generate public URLs for course thumbnails
+        const updatedCourses = data.map(course => ({
+          ...course,
+          thumbnail_url: course.thumbnail_url
+            ? supabase.storage.from('course-assets').getPublicUrl(course.thumbnail_url).data.publicUrl
+            : null
+        }));
+
+        setCourses(updatedCourses);
+        setFilteredCourses(updatedCourses);
       }
     };
 
     fetchCourses();
   }, []);
 
-  // Handle filtering logic
   const applyFilters = () => {
     let filtered = courses;
 
-    // Filter by search query
     if (searchQuery) {
-      filtered = filtered.filter((course) =>
+      filtered = filtered.filter(course =>
         course.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Filter by category
     if (category) {
-      filtered = filtered.filter((course) => course.category === category);
+      filtered = filtered.filter(course => course.category === category);
     }
 
-    // Filter by price range
     if (priceRange) {
-      filtered = filtered.filter((course) => {
+      filtered = filtered.filter(course => {
         const price = parseFloat(course.price);
         if (priceRange === "free") return price === 0;
         if (priceRange === "under50") return price < 50;
@@ -267,11 +406,17 @@ export default function HomePage() {
               className="p-4 bg-white rounded shadow cursor-pointer"
               onClick={() => router.push(`/instructor/courses/${course.id}`)}
             >
-              <img
-                src={course.thumbnail_url}
-                alt={course.title}
-                className="w-full h-40 object-cover rounded mb-4"
-              />
+              {course.thumbnail_url ? (
+                <img
+                  src={course.thumbnail_url}
+                  alt={course.title}
+                  className="w-full h-40 object-cover rounded mb-4"
+                />
+              ) : (
+                <div className="w-full h-40 bg-gray-300 flex items-center justify-center rounded mb-4">
+                  <span className="text-gray-600">No Image</span>
+                </div>
+              )}
               <h2 className="text-xl font-semibold">{course.title}</h2>
               <p className="text-gray-500 text-sm">{course.instructor}</p>
               <p className="text-blue-600 font-bold">${course.price}</p>

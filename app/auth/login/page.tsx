@@ -187,6 +187,115 @@
 // }
 
 
+// "use client";
+
+// import { useState } from "react";
+// import { useRouter } from "next/navigation";
+// import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+
+// const Login = () => {
+//   const supabase = createClientComponentClient();
+//   const router = useRouter();
+
+//   // Form state
+//   const [form, setForm] = useState({
+//     email: "",
+//     password: "",
+//   });
+//   const [error, setError] = useState("");
+//   const [loading, setLoading] = useState(false);
+
+//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setForm({ ...form, [e.target.name]: e.target.value });
+//   };
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     setLoading(true);
+//     setError("");
+
+//     const { email, password } = form;
+
+//     try {
+//       // Log in the user
+//       const { data, error } = await supabase.auth.signInWithPassword({
+//         email,
+//         password,
+//       });
+
+//       if (error) throw error;
+
+//       const user = data.user;
+//       console.log(user)
+
+//       if (user) {
+
+//         const { data: profile, error: profileError } = await supabase
+//           .from("users")
+//           .select("role")
+//           .eq("id", user.id)
+//           console.log(profile)
+//         if (profileError) throw profileError;
+
+//         const userRole = profile[0].role;
+//         console.log("role",userRole)
+
+//         // Redirect based on the role
+//         if (userRole === "admin") {
+//           router.push("/admin");
+//         } else if (userRole === "instructor") {
+//           router.push("/instructor");
+//         } else if (userRole === "user"){
+//           router.push("/users")
+//         }
+//         else {
+//           throw new Error("Invalid role. Please contact support.");
+//         }
+//       }
+//     } catch (err: any) {
+//       setError(err.message || "Something went wrong!");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div className="max-w-md mx-auto mt-10">
+//       <h1 className="text-2xl font-bold mb-4">Login</h1>
+//       {error && <p className="text-red-500 mb-4">{error}</p>}
+//       <form onSubmit={handleSubmit} className="space-y-4">
+//         <input
+//           type="email"
+//           name="email"
+//           placeholder="Email"
+//           value={form.email}
+//           onChange={handleChange}
+//           required
+//           className="w-full p-2 border rounded"
+//         />
+//         <input
+//           type="password"
+//           name="password"
+//           placeholder="Password"
+//           value={form.password}
+//           onChange={handleChange}
+//           required
+//           className="w-full p-2 border rounded"
+//         />
+//         <button
+//           type="submit"
+//           disabled={loading}
+//           className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+//         >
+//           {loading ? "Logging in..." : "Login"}
+//         </button>
+//       </form>
+//     </div>
+//   );
+// };
+
+// export default Login;
+
 "use client";
 
 import { useState } from "react";
@@ -197,11 +306,7 @@ const Login = () => {
   const supabase = createClientComponentClient();
   const router = useRouter();
 
-  // Form state
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -217,7 +322,7 @@ const Login = () => {
     const { email, password } = form;
 
     try {
-      // Log in the user
+      // Sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -226,39 +331,36 @@ const Login = () => {
       if (error) throw error;
 
       const user = data.user;
-      console.log(user)
+      if (!user) throw new Error("User not found!");
 
-      if (user) {
-        // Fetch the user's role
-        //       const { data } = await supabase.from("users").select("*");
-//       if (error) {
-//         console.log(error);
-//       } else {
-//         console.log(data);
-//       }
-//     };
-        const { data: profile, error: profileError } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", user.id)
-          console.log(profile)
-        if (profileError) throw profileError;
+      // Fetch role
+      const { data: profile, error: profileError } = await supabase
+        .from("users") // Fixed table name
+        .select("role")
+        .eq("id", user.id)
+        .single();
 
-        const userRole = profile[0].role;
-        console.log("role",userRole)
+      if (profileError || !profile) throw new Error("Role not found!");
 
-        // Redirect based on the role
-        if (userRole === "admin") {
-          router.push("/admin");
-        } else if (userRole === "instructor") {
-          router.push("/instructor");
-        } else {
-          throw new Error("Invalid role. Please contact support.");
-        }
+      const userRole = profile.role;
+
+      // Redirect user based on role
+      if (userRole === "admin") {
+        router.push("/admin");
+      } else if (userRole === "instructor") {
+        router.push("/instructor");
+      } else if (userRole === "user") {
+        router.push("/dashboard");
+      } else {
+        throw new Error("Invalid role. Please contact support.");
       }
-    } catch (err: any) {
-      setError(err.message || "Something went wrong!");
-    } finally {
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message); // Extract the error message
+      } else {
+        setError("An unknown error occurred");
+      }
+    }finally {
       setLoading(false);
     }
   };

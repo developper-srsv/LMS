@@ -15,7 +15,7 @@ export default function SignUpPage() {
   const handleSignUp = async () => {
     setError('');
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -40,8 +40,12 @@ export default function SignUpPage() {
       if(err) {
         console.log("sign up insert error",err)
       }
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong!');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message); // Extract the error message
+      } else {
+        setError("An unknown error occurred");
+      }
     }
   };
 
