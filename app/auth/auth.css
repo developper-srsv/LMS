@@ -1,0 +1,13 @@
+/* Basic styling for auth pages */
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  .min-h-screen {
+    height: 100vh;
+  }
+  
+  .bg-gray-100 {
+    background-color: #f7fafc;
+  }
+  
