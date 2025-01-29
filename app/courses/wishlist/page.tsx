@@ -5,7 +5,6 @@ import { supabase } from "../../../src/lib/supabase";
 
 export default function Wishlist() {
   const [wishlist, setWishlist] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
 //   useEffect(() => {
 //     const fetchWishlist = async () => {
