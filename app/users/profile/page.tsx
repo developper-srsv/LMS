@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Pencil } from "lucide-react";
 import Image from "next/image";
-import { toast } from "react-toastify";
+
 
 type UserProfile = {
   id: string;
@@ -16,8 +16,9 @@ type UserProfile = {
   qualifications?: string;
   profile_photo?: string;
 };
+
 export default function InstructorProfile() {
-  const [user, setUser] = useState<UserProfile | null>(null);
+const [user, setUser] = useState<UserProfile | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [bio, setBio] = useState("");
@@ -39,12 +40,8 @@ export default function InstructorProfile() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-    console.log(data);
+    const { data, error } = await supabase.from("users").select("*").eq("id", user.id).single();
+    console.log(data)
 
     if (error) console.error("Error fetching user:", error);
 
@@ -65,9 +62,7 @@ export default function InstructorProfile() {
     setLoading(true);
     const filePath = `profile-photos/${user.id}/photo.jpg`;
 
-    const { error } = await supabase.storage
-      .from("profile-photos")
-      .upload(filePath, profilePhoto, { upsert: true });
+    const { error } = await supabase.storage.from("profile-photos").upload(filePath, profilePhoto, { upsert: true });
 
     if (error) {
       console.error("Upload error:", error);
@@ -75,10 +70,7 @@ export default function InstructorProfile() {
       return;
     }
 
-    await supabase
-      .from("users")
-      .update({ profile_photo: filePath })
-      .eq("id", user.id);
+    await supabase.from("users").update({ profile_photo: filePath }).eq("id", user.id);
 
     setProfilePhotoUrl(getPublicUrl(filePath));
     setLoading(false);
@@ -86,9 +78,7 @@ export default function InstructorProfile() {
 
   function getPublicUrl(filePath: string) {
     if (!filePath) return "";
-    const { data } = supabase.storage
-      .from("profile-photos")
-      .getPublicUrl(filePath);
+    const { data } = supabase.storage.from("profile-photos").getPublicUrl(filePath);
     return data.publicUrl;
   }
 
@@ -106,20 +96,13 @@ export default function InstructorProfile() {
       })
       .eq("id", user.id);
 
-    if (error) {
-      console.error("Error updating profile:", error);
-      toast.error("error");
-    } else {
-      setLoading(false);
-      toast.success("Your profile has been updated successfully", {
-        autoClose: 1000,
-      });
-    }
+    if (error) console.error("Error updating profile:", error);
+    setLoading(false);
   }
 
   return (
-    <div className="container max-w-3xl py-10" style={{ margin: "0 auto" }}>
-      <h1 className="text-2xl font-bold mb-6 text-center">My Profile</h1>
+    <div className="container max-w-3xl py-10" style={{margin:"0 auto"}}>
+      <h1 className="text-2xl font-bold mb-6 text-center">My Account</h1>
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
@@ -206,17 +189,11 @@ export default function InstructorProfile() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm text-gray-600">First name</label>
-                    <Input
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
+                    <Input value={firstName} onChange={(e) => setFirstName(e.target.value)}  />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm text-gray-600">Last name</label>
-                    <Input
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
+                    <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </div>
                 </div>
 
@@ -238,11 +215,7 @@ export default function InstructorProfile() {
                   />
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-emerald-500 hover:bg-emerald-600"
-                  disabled={loading}
-                >
+                <Button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600" disabled={loading}>
                   {loading ? "Updating..." : "Update"}
                 </Button>
               </form>
@@ -254,9 +227,7 @@ export default function InstructorProfile() {
         <TabsContent value="personalization">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-500">
-                Personalization settings coming soon...
-              </p>
+              <p className="text-sm text-gray-500">Personalization settings coming soon...</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -264,9 +235,7 @@ export default function InstructorProfile() {
         <TabsContent value="account">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-500">
-                Account settings coming soon...
-              </p>
+              <p className="text-sm text-gray-500">Account settings coming soon...</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -274,9 +243,7 @@ export default function InstructorProfile() {
         <TabsContent value="payment">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-500">
-                Payment methods coming soon...
-              </p>
+              <p className="text-sm text-gray-500">Payment methods coming soon...</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -284,9 +251,7 @@ export default function InstructorProfile() {
         <TabsContent value="notifications">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-500">
-                Notification settings coming soon...
-              </p>
+              <p className="text-sm text-gray-500">Notification settings coming soon...</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -294,9 +259,7 @@ export default function InstructorProfile() {
         <TabsContent value="privacy">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-sm text-gray-500">
-                Privacy settings coming soon...
-              </p>
+              <p className="text-sm text-gray-500">Privacy settings coming soon...</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -304,3 +267,6 @@ export default function InstructorProfile() {
     </div>
   );
 }
+
+
+

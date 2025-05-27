@@ -1,9 +1,9 @@
 import React from 'react'
 
-function page() {
+const page = () => {
   return (
     <div>
-     users page 
+      default courses page
     </div>
   )
 }

@@ -1,95 +1,178 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { supabase } from '../../../src/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Link from "next/link";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "../../../src/lib/supabase";
+import { toast } from "react-toastify";
 
 export default function SignUpPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user'); // Default role: user
-  const [error, setError] = useState('');
   const router = useRouter();
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "user",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleRoleChange = (value: string) => {
+    setForm({ ...form, role: value });
+  };
 
   const handleSignUp = async () => {
-    setError('');
+    setError("");
+    setLoading(true);
+
     try {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: form.email,
+        password: form.password,
       });
 
       if (error) throw error;
 
-      // Assign role to user in Supabase
-      // const { error: roleError } = await supabase
-      //   .from('users')
-      //   .update({ role })
-      //   .eq('id', data.user?.id);
+      const { error: insertError } = await supabase.from("users").insert({
+        email: form.email,
+        name: form.name,
+        role: form.role,
+      });
 
-      // if (roleError) throw roleError;
-
-      alert('Sign up successful! Please check your email for verification.');
-      router.push('/auth/login'); // Redirect to login
-      const {error:err}=await supabase.from('users').insert({
-        email:email,
-        name:name,
-        role:role
-      })
-      if(err) {
-        console.log("sign up insert error",err)
+      if (insertError) {
+        console.log("sign up insert error", insertError);
+        throw insertError;
       }
+
+      toast.success(
+        "Sign up successful! Please check your email for verification.",
+        {
+          autoClose: 1000,
+        }
+      );
+      router.push("/auth/login");
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message); // Extract the error message
+        setError(err.message);
       } else {
         setError("An unknown error occurred");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-6">Sign Up</h1>
-      {error && <p className="text-red-500">{error}</p>} 
-      <div className="w-full max-w-sm space-y-4">
-      <input
-          type="text"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 border rounded"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-2 border rounded"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-2 border rounded"
-        />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="w-full px-4 py-2 border rounded"
-        >
-          <option value="user">User</option>
-          <option value="instructor">Instructor</option>
-          <option value="admin">Admin</option>
-        </select>
-        <button
-          onClick={handleSignUp}
-          className="w-full px-4 py-2 bg-blue-500 text-white rounded"
-        >
-          Sign Up
-        </button>
+    <div className="min-h-screen flex w-[50%]">
+      {/* Left Image Section - Hidden on mobile */}
+      <div className="hidden md:block  relative">
+        {/* <Image
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-02-02%20235504-A4cAu1lvAPjsHaKkt69hzqNnyx1laH.png"
+          alt="Developer working"
+          fill
+          className="object-cover"
+          priority
+        /> */}
+        {/* Developer info overlay */}
+      </div>
+
+      {/* Right Sign Up Section */}
+      <div className="w-full  flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-2 items-center pb-4">
+            <div className="flex items-center gap-2">
+              {/* <Image src="/placeholder.svg" alt="MyCourse.io logo" width={32} height={32} className="rounded-full" /> */}
+              <h2 className="text-xl font-semibold">LMS</h2>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+            Register once, learn forever
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Input
+                type="text"
+                name="name"
+                placeholder="Name"
+                value={form.name}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+              <Select value={form.role} onValueChange={handleRoleChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="instructor">Instructor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                className="w-full bg-emerald-400 hover:bg-emerald-500 text-white"
+                onClick={handleSignUp}
+                disabled={loading}
+              >
+                {loading ? "Creating Account..." : "Create Account"}
+              </Button>
+            </div>
+
+            <div className="text-center text-sm">
+              <span className="text-muted-foreground">
+                Already have an account?{" "}
+              </span>
+              <Link
+                href="/auth/login"
+                className="text-emerald-500 hover:text-emerald-600"
+              >
+                Sign in
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ export default function CourseMaterials({ courseId }: { courseId: string }) {
   const handleFileUpload = async () => {
     if (!file) return;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('course-materials')
       .upload(`${courseId}/${file.name}`, file);
 
